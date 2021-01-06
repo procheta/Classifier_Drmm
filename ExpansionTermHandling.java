@@ -129,7 +129,7 @@ public class ExpansionTermHandling {
 
     public void createExpandedFile() throws FileNotFoundException, IOException {
         String readFile = prop.getProperty("readFile");
-	String writeFile= prop.getProperty("writeile");
+	String writeFile= prop.getProperty("writeFile");
 	int nTerms = Integer.parseInt(prop.getProperty("nterms"));
 	FileReader fr = new FileReader(new File(readFile));
         BufferedReader br = new BufferedReader(fr);
