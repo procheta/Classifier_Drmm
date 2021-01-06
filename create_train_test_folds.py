@@ -13,9 +13,6 @@ from random import randint
 import traceback
 
 # make sure the argument is good (0 = the python file, 1 the actual argument)
-if len(sys.argv) < 3:
-    print('Needs 2 arguments - 1. the qrel file, 2. the prerank file')
-    exit(0)
 
 input_file = sys.argv[1]
 
