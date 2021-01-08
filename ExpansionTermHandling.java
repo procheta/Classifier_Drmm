@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.trusteval.MSMARCO_DRMM;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -53,7 +52,7 @@ public class ExpansionTermHandling {
         int count = 0;
         int count1 = 0;
         while (line != null) {
-            String st[] = line.split(",");
+            String st[] = line.split("\t");
             if (!qMap.containsKey(st[1])) {
                 qMap.put(st[1], count++);
             }
@@ -91,8 +90,9 @@ public class ExpansionTermHandling {
         FileWriter fw1 = new FileWriter(new File(prerankedFile));
         BufferedWriter bw1 = new BufferedWriter(fw1);
         while (line != null) {
-            String st[] = line.split(",");
-            if (Integer.parseInt(st[3]) == 0) {
+            String st[] = line.split("\t");
+            //System.out.println(line);
+	    if (Integer.parseInt(st[3]) == 0) {
                 bw.write(String.valueOf(qMap.get(st[1])) + " 0 " + String.valueOf(qMap1.get(st[2])) + " " + st[3]);
                 bw.newLine();
             } else {
@@ -115,8 +115,10 @@ public class ExpansionTermHandling {
         HashMap<Double, String> words = new HashMap<>();
         ArrayList<Double> scores = new ArrayList<>();
         for (String s: st){
-         String parts[] = s.split("^");
+	 s = s.replace("^"," ");
+         String parts[] = s.split(" ");
          words.put(Double.parseDouble(parts[1]), parts[0]);
+	 scores.add(Double.parseDouble(parts[1]));
         }  
         Collections.sort(scores);
         String expandedString = "";
@@ -143,7 +145,7 @@ public class ExpansionTermHandling {
             String expansion1 =getExpansionTerms(st[2],nTerms);
 	   String expansion2 = getExpansionTerms(st[4],nTerms);
 
-            bw.write(st[0]+"\t"+st[1]+expansion1+"\t"+st[3]+expansion2+" "+st[5]);
+            bw.write(st[0]+"\t"+st[1]+expansion1+"\t"+st[3]+expansion2+"\t"+st[5]);
         	bw.newLine();
         
             line = br.readLine();
@@ -156,8 +158,8 @@ public class ExpansionTermHandling {
         Properties prop = new Properties();
         prop.load(new FileReader(new File("retrieve.properties")));
         ExpansionTermHandling drp = new ExpansionTermHandling(prop);
-        drp.createQrel();
         drp.createExpandedFile();
+	drp.createQrel();
     }
 
 }
