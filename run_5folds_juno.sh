@@ -2,16 +2,20 @@
 
 foldname="grissom_fold_"
 
-trainFoldLocation="../data/5-folds/modifed_querypair_train_fold_"
-trainHistogramLocation="/home/procheta/Histogramquerypairfullqrel_5.txt"
-testFoldLocation="../data/5-folds/modifed_querypair_train_fold_"
-testHistogramLocation="/home/procheta/Histogramquerypairfullqrel_5.txt"
+trainFoldLocation="../data/5-folds/drmm_fold_"
+trainHistogramLocation="/home/procheta/Histogramquerypairfullqrel_10.txt"
+trainLeftVecLocation="../data/5-folds/drmm_leftvec_fold_"
+trainRightVecLocation="../data/5-folds/drmm_rightvec_fold_"
+testLeftVecLocation="../data/5-folds/drmm_leftvec_fold_"
+testRightVecLocation="../data/5-folds/drmm_rightvec_fold_"
+testFoldLocation="../data/5-folds/drmm_fold_"
+testHistogramLocation="/home/procheta/Histogramquerypairfullqrel_10.txt"
 
 
 for number in {1..5}
 do
 	#echo "running fold: $number"
-	/home/procheta/spinning-storage/procheta/pythonNew/bin/python3 run_model.py "$foldname$number" "$trainFoldLocation$number.train" "$trainHistogramLocation" "$testFoldLocation$number.test" "$testHistogramLocation" #&> logs/fold1.log &
+	/home/procheta/spinning-storage/procheta/pythonNew/bin/python3 run_model_Roberta.py "$foldname$number" "$trainFoldLocation$number.train" "$trainHistogramLocation" "$trainLeftVecLocation$number".train "$trainRightVecLocation$number.train" "$testFoldLocation$number.test" "$testHistogramLocation" "$testLeftVecLocation$number.test" "$testRightVecLocation$number.test"
 done
 exit 0
 
