@@ -184,8 +184,8 @@ def load_histogram_data(filepath):
                 x=histograms[k]
                 idf_val=idfs[k]
                 for l in range(len(x)):
-                    #hist2[l]=hist2[l]+x[l] #without idf
-                    hist2[l]=hist2[l]+x[l]*idf_val
+                    hist2[l]=hist2[l]+x[l] #without idf
+                    #hist2[l]=hist2[l]+x[l]*idf_val
             if topicId not in data_per_topic:
                 data_per_topic[topicId] = {}
             data_per_topic[topicId][docId] = (score, idfs, hist2)

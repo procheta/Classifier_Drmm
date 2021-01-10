@@ -32,6 +32,7 @@ def build_keras_model():
     #
     # the histogram handling part (feed forward network)
     #
+
     processed_vec1=Dense(100,activation='selu')(vec1)
     processed_vec2=Dense(100,activation='selu')(vec2)
     

@@ -2,8 +2,8 @@ import sys
 import keras
 from keras.callbacks import ModelCheckpoint
 from keras.utils import plot_model
-from keras_model_Roberta import build_keras_model
-from load_data_Roberta import *
+from keras_model_robertawithdrmm import build_keras_model
+from load_data_robertawithdrmm import *
 from loss_function import *
 import numpy as np
 import os
@@ -39,7 +39,7 @@ if not os.path.exists('models/'):
 
 
 
-model.fit([train_input,x_0,x_1], train_labels, batch_size=5000, verbose=1, shuffle=False, epochs=20)#, callbacks=[c1])
+model.fit([train_input,x_0,x_1], train_labels, batch_size=5000, verbose=1, shuffle=False, epochs=200)#, callbacks=[c1])
 
 
 model.save_weights('models/'+run_name+'.weights')
@@ -56,7 +56,7 @@ predictions = model.predict([test_data['doc'],x_0,x_1], batch_size = 10)
 
 if not os.path.exists('result/'):
     os.makedirs('result/')
-with open('result/'+run_name+".result1", 'w') as outFile:
+with open('result/'+run_name+".result2", 'w') as outFile:
     i = 0
     for topic, doc in pre_rank_data:
         outFile.write(topic + ' '+doc+' '+str(predictions[i][0])+'\n')

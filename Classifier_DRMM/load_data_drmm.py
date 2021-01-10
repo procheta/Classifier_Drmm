@@ -18,9 +18,6 @@ def get_keras_train_input(pair_file, histogram_file):
             parts = line.strip().split()
             topic_rel_nonrel.append((parts[0], parts[1], parts[2]))
 
-            #if len(topic_rel_nonrel) == 100000:
-            #    break
-    print(topic_rel_nonrel[0])
     print('loaded ' + str(len(topic_rel_nonrel)) + ' qrel pair entries')
     
     histogram_data,histogram_count = load_histogram_data(histogram_file)
@@ -34,8 +31,6 @@ def get_keras_train_input(pair_file, histogram_file):
 
     # np histogram
     #changed
-    print("histogram length")
-    print(len(histogram_data))
     histogram_input = np.zeros((len(histogram_data), 5), dtype=np.float32)
 
     # topic idf
@@ -46,7 +41,6 @@ def get_keras_train_input(pair_file, histogram_file):
     for ii in range(len(histogram_data)):
         labels[ii]=topic_rel_nonrel[ii][2]
     
-    #labels[::2] = 1
 
     i_input = 0
     skipped_count = 0
