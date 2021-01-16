@@ -40,8 +40,8 @@ public class RobertaHandling {
 	FileReader fr = new FileReader(new File(topicFile));
         BufferedReader br = new BufferedReader(fr);
 
-	FileWriter fw1 = new FileWriter(new File(qrelFile));
-	BufferedWriter bw1 = new BufferedWriter(new BufferedWriter(fw1));
+	FileWriter fw = new FileWriter(new File(qrelFile));
+	BufferedWriter bw = new BufferedWriter(new BufferedWriter(fw));
 
 
 
@@ -63,24 +63,16 @@ public class RobertaHandling {
 	       {qMap1.put(st[2],String.valueOf(count1));
 	       	count1++;
 	       }
-	       bw1.write(qMap.get(st[1])+" "+ qMap1.get(st[2])+" "+st[3]);
-	       bw1.newLine();
 
             line = br.readLine();
         }
-	bw1.close();
 	
-	fr = new FileReader(new File(predictionFile));
-	br = new BufferedReader(fr);
 
-        FileWriter fw = new FileWriter(new File(resultFile));
-        BufferedWriter bw = new BufferedWriter(fw);
 
-	
-        line = br.readLine();
-    	while(line != null){	
-		String st[] = line.split("\t");	
-            bw.write(qMap.get(st[0]) + "\t" + qMap1.get(st[1])+"\t"+st[2]);
+	Iterator it = qMap.keySet().iterator();
+    	while(it.hasNext()){	
+		String st =(String)it.next();	
+            bw.write(st+"\t"+qMap.get(st) );
             bw.newLine();
 	    line= br.readLine();
         }

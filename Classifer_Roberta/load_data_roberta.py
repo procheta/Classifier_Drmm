@@ -165,8 +165,7 @@ def load_histogram_data(filepath):
             #
             # handle idfs
             
-            #changed
-            idfs = np.zeros((25, 1), np.float32)
+            idfs = np.zeros((max_query_length, 1), np.float32)
             for i in range(numberOfTerms):
                 idfs[i] = np.array([float(parts[i + 4])], np.float32)
             #
