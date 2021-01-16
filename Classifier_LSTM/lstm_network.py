@@ -13,50 +13,53 @@ import nltk
 import keras.preprocessing.text
 from nltk.tokenize import word_tokenize
 from numpy import newaxis
+from sklearn.model_selection import KFold
+from keras.preprocessing import sequence
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Flatten, Embedding, LSTM, Bidirectional, Concatenate
+from keras.layers import Input, Lambda
+from keras.optimizers import Adam
+from keras.optimizers import RMSprop
+import sys
+from keras.layers.merge import concatenate
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.model_selection import KFold
+
+LSTM_DIM = 32
+DROPOUT = 0.2
 MAXLEN = 50
 SEED=314159 # first digits of Pi... an elegant seed!
-MODEL_FILE= 'trust_query_pairs.h5'
-import sys
-
-
+MODEL_FILE='trust_query_pairs.h5'
+VOCAB_FILE='wiki2013-analyzed.vec'
+RESULT_FILE="result.txt"
 
 df = pd.read_csv(sys.argv[1])
-print("df shape ",df.shape)
 df_query_1 = np.array(df["query"]) 
 df_query_2 = np.array(df["variant"])
-#print(df_query_1)
 x_train = np.vstack([df_query_1, df_query_2])
 x_train = np.transpose(x_train)
 x_train1=np.transpose(df_query_1)
 x_train2=np.transpose(df_query_2)
 
-print("first x_train shape ",x_train.shape)
-
-"""**Create vocabulary**"""
 
 nltk.download('punkt')
-#df = pd.read_csv('orcas_train.txt')
-df = pd.read_csv(sys.argv[1])
 corpora = []
 corpora = df['query'].tolist()
 corpora += df['variant'].tolist()
 
-# print(corpora) 
 
 word_tokenizer = Tokenizer()
 word_tokenizer.fit_on_texts(corpora)
 vocab_length = len(word_tokenizer.word_index) + 1
 
-print(vocab_length)
+print("Total number of Words ",vocab_length)
 
 
 word_count = lambda sentence: len(word_tokenize(sentence))
 longest_sentence = max(corpora, key=word_count)
 max_len = len(word_tokenize(longest_sentence))
-print(max_len)
+print("Maximum query length ",max_len)
 
-df_query_1 = np.array(df["query"]) 
-df_query_2 = np.array(df["variant"])
 
 query_1 = word_tokenizer.texts_to_sequences(df_query_1)
 query_2 = word_tokenizer.texts_to_sequences(df_query_2)
@@ -67,17 +70,13 @@ query_2 = pad_sequences(query_2, max_len, padding='post')
 x_train = np.hstack([query_1, query_2])
 y_train = np.array(df["clicked"])
 y_train = np.where(y_train < 1 , y_train, 1)
-print(x_train.shape)
 
 
-# split into train and eval
-from sklearn.model_selection import KFold
 
 
 """**Load Pre Trained word embedding** """
 
-
-path_to_glove_file = 'wiki2013-analyzed.vec'
+path_to_glove_file =VOCAB_FILE 
 embeddings_index = {}
 with open(path_to_glove_file) as f:
     for line in f:
@@ -97,8 +96,6 @@ embedding_matrix = np.zeros((num_tokens, embedding_dim))
 for word, i in word_tokenizer.word_index.items():
     embedding_vector = embeddings_index.get(word)
     if embedding_vector is not None:
-        # Words not found in embedding index will be all-zeros.
-        # This includes the representation for "padding" and "OOV"
         embedding_matrix[i] = embedding_vector
         hits += 1
     else:
@@ -108,75 +105,33 @@ print("Converted %d words (%d misses)" % (hits, misses))
 
 """**Process the model**"""
 
-from keras.preprocessing import sequence
-from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Flatten, Embedding, LSTM, Bidirectional, Concatenate
-from keras.layers import Input, Lambda
-from keras.optimizers import Adam
-from keras.optimizers import RMSprop
-
-LSTM_DIM = 32
-#LSTM_DIM = 48
-DROPOUT = 0.2
-
-from keras.layers.merge import concatenate
-
 def complete_model():
     
     input_a = Input(shape=(max_len, ))    
-    print (input_a.shape)
     
     emb_a = Embedding(embedding_matrix.shape[0],
                   embedding_matrix.shape[1],
                   weights=[embedding_matrix])(input_a)
-    print (emb_a.shape)
     
     input_b = Input(shape=(max_len, ))    
-    print (input_b.shape)
     
     emb_b = Embedding(input_dim=embedding_matrix.shape[0],
                   output_dim=embedding_matrix.shape[1],
                   weights=[embedding_matrix])(input_b)
-    print (emb_b.shape)
     
     shared_lstm = LSTM(LSTM_DIM)
 
-    # because we re-use the same instance `base_network`,
-    # the weights of the network
-    # will be shared across the two branches
     processed_a = shared_lstm(emb_a)
     processed_a = Dropout(DROPOUT)(processed_a)
     processed_b = shared_lstm(emb_b)
     processed_b = Dropout(DROPOUT)(processed_b)
 
     merged_vector = concatenate([processed_a, processed_b], axis=-1)
-    # And add a logistic regression (2 class - sigmoid) on top
-    # used for backpropagating from the (pred, true) labels
     predictions = Dense(1, activation='sigmoid')(merged_vector)
     
     model = Model([input_a, input_b], outputs=predictions)
     return model
 
-from keras import backend as K
-
-def recall_m(y_true, y_pred):
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    recall = true_positives / (possible_positives + K.epsilon())
-    return recall
-
-def precision_m(y_true, y_pred):
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    precision = true_positives / (predicted_positives + K.epsilon())
-    return precision
-
-def f1_m(y_true, y_pred):
-    precision = precision_m(y_true, y_pred)
-    recall = recall_m(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
-
-from sklearn.metrics import precision_recall_fscore_support
 
 ## quick hack:
 
@@ -193,17 +148,13 @@ def fscore_value(y_true, y_pred):
     return fscore
 
 
-#precision_recall_fscore_support(y_true, y_pred, average='macro')
 
 def trainModel(model,y_train, q1,q2):
-    #EPOCHS = 1
     EPOCHS = 10
-    #BATCH_SIZE = 1000
     BATCH_SIZE = 128
     history = model.fit([q1, q2], y_train,
               batch_size=BATCH_SIZE,
               epochs=EPOCHS,
-              # validation_data=([x_val[:, max_len], x_val[:, max_len: 2*max_len]], y_val),
               #validation_data=([x_test[:, max_len], x_test[:, max_len: 2*max_len]], y_test),
               verbose=True
              )
@@ -214,16 +165,11 @@ def trainModel(model,y_train, q1,q2):
 
 def buildModel():
     model=complete_model()
-    #model.compile(optimizer="rmsprop", loss="binary_crossentropy", metrics=['accuracy', f1_m, precision_m, recall_m])
     model.compile(optimizer="rmsprop", loss="binary_crossentropy", metrics=['accuracy'])
     return model
 
 
 
-
-
-
-from sklearn.model_selection import KFold
 
 kf = KFold(n_splits = 5, random_state=None, shuffle=False) # TODO : make shuffle = True 
 total_accuracy = 0
@@ -235,7 +181,6 @@ for train_index, test_index in kf.split(x_train):
   model = buildModel()
   model.summary()
   
-  # print("TRAIN:", train_index, "TEST:", test_index)
   X_train, X_test = x_train[train_index], x_train[test_index]
   Y_train, Y_test = y_train[train_index], y_train[test_index]
 
@@ -245,17 +190,11 @@ for train_index, test_index in kf.split(x_train):
   q1_test_text=df_query_1[test_index]
   q2_test_text=df_query_2[test_index]
   q2_test=query_2[test_index]
-  print(X_train.shape)
-  print(X_test.shape)
-  print(Y_train.shape)
-  print(Y_test.shape)
 
-  history = trainModel(model, Y_train,q1_train,q2_train)
-  # plot the curve
-  #loss, accuracy, f1_score, precision, recall = model.evaluate([q1_test, q2_test], Y_test, verbose=0)
+  trainModel(model, Y_train,q1_train,q2_train)
   loss, accuracy = model.evaluate([q1_test, q2_test], Y_test, verbose=0)
   y_pred = model.predict([q1_test, q2_test])
-  with open("/home/procheta/result.txt",'a+') as f:
+  with open(RESULT_FILE,'a+') as f:
       for k in range(len(q1_test)):
         f.write(str(q1_test_text[k]))
         f.write("\t")
@@ -277,7 +216,6 @@ for train_index, test_index in kf.split(x_train):
   total_precision += precision
   total_recall += recall
   total_f1 += fscore
-  # model.load_weights(MODEL_FILE) # TODO : remove ... redundant 
   K.clear_session()
   del model 
 
@@ -285,11 +223,3 @@ print('Avg accuracy: ', total_accuracy/5)
 print('Avg f1: ', total_f1/5)
 print('Avg precision: ', total_precision/5)
 print('Avg recall: ', total_recall/5)
-#print('Avg accuracy: ', total_accuracy/5)
-
-
-
-
-
-
-print(y_train.shape)

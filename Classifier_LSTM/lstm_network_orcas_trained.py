@@ -32,7 +32,7 @@ x_train = np.vstack([df_query_1, df_query_2])
 x_train = np.transpose(x_train)
 x_train1=np.transpose(df_query_1)
 x_train2=np.transpose(df_query_2)
-
+Y_test=np.array(df1["yLabel"])
 print("first x_train shape ",x_train.shape)
 
 """**Create vocabulary**"""
@@ -210,7 +210,7 @@ def fscore_value(y_true, y_pred):
 
 def trainModel(model,y_train, q1,q2):
     #EPOCHS = 1
-    EPOCHS = 10
+    EPOCHS = 1
     #BATCH_SIZE = 1000
     BATCH_SIZE = 128
     history = model.fit([q1, q2], y_train,
@@ -259,6 +259,7 @@ q1_test_text=query_test_1
 q2_test_text=query_test_2
 
 history = trainModel(model, Y_train,q1_train,q2_train)
+#model.load_weights(MODEL_FILE)
 # plot the curve
 #loss, accuracy, f1_score, precision, recall = model.evaluate([q1_test, q2_test], Y_test, verbose=0)
 loss, accuracy = model.evaluate([q1_test, q2_test], Y_test, verbose=0)
